@@ -1,5 +1,7 @@
 from enum import IntEnum
 
+from WaveshareRelayControl.waveshare_defs import WaveshareDef
+
 
 class ThresholdType(IntEnum):
     OVERSHOOT = 1
@@ -33,7 +35,7 @@ class ControlDef:
                  threshold_type: ThresholdType = None,
                  threshold_duration_millis: int = None,
                  control_func: ControlFunc = None,
-                 control_channel: int = None):
+                 control_channel: WaveshareDef = None):
         self._uuid: str = uuid
         self._macs: set = macs
         self._sensor_type: int = sensor_type
@@ -42,7 +44,7 @@ class ControlDef:
         self._threshold_type: ThresholdType = threshold_type
         self._threshold_duration_millis = threshold_duration_millis
         self._control_func: ControlFunc = control_func
-        self._control_channel = control_channel
+        self._control_channel: WaveshareDef = control_channel
 
     def get_uuid(self) -> str:
         return self._uuid
@@ -85,3 +87,15 @@ class ControlDef:
 
     def set_threshold_duration_millis(self, threshold_duration_millis: int):
         self._threshold_duration_millis = threshold_duration_millis
+
+    def get_control_func(self)->ControlFunc:
+        return self._control_func
+
+    def set_control_func(self, control_func:ControlFunc):
+        self._control_func = control_func
+
+    def get_control_channel(self)->WaveshareDef:
+        return self._control_channel
+
+    def set_control_channel(self, control_channel:WaveshareDef):
+        self._control_channel = control_channel
