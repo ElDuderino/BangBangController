@@ -1,0 +1,3 @@
+[submodule "WaveshareRelayControl"]
+	path = WaveshareRelayControl
+	url = https://github.com/ElDuderino/WaveshareRelayControl
