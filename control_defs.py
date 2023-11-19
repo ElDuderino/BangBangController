@@ -1,5 +1,5 @@
 from enum import IntEnum
-
+import json
 from WaveshareRelayControl.waveshare_defs import WaveshareDef
 
 
@@ -7,10 +7,28 @@ class ThresholdType(IntEnum):
     OVERSHOOT = 1
     UNDERSHOOT = -1
 
+    @staticmethod
+    def from_int(thresh_type: int):
+        if thresh_type == 1:
+            return ThresholdType.OVERSHOOT
+        elif thresh_type == -1:
+            return ThresholdType.UNDERSHOOT
+        else:
+            return None
+
 
 class ControlFunc(IntEnum):
     ON = 1
     OFF = 0
+
+    @staticmethod
+    def from_int(control_func):
+        if control_func == 1:
+            return ControlFunc.ON
+        elif control_func == 0:
+            return ControlFunc.OFF
+        else:
+            return None
 
 
 class ControlDef:
@@ -37,7 +55,12 @@ class ControlDef:
                  control_func: ControlFunc = None,
                  control_channel: WaveshareDef = None):
         self._uuid: str = uuid
-        self._macs: set = macs
+
+        if macs is None:
+            self._macs = set()
+        else:
+            self._macs = macs
+
         self._sensor_type: int = sensor_type
         self._threshold_value: float = threshold_value
         self._hysteresis: float = hysteresis
@@ -88,14 +111,67 @@ class ControlDef:
     def set_threshold_duration_millis(self, threshold_duration_millis: int):
         self._threshold_duration_millis = threshold_duration_millis
 
-    def get_control_func(self)->ControlFunc:
+    def get_control_func(self) -> ControlFunc:
         return self._control_func
 
-    def set_control_func(self, control_func:ControlFunc):
+    def set_control_func(self, control_func: ControlFunc):
         self._control_func = control_func
 
-    def get_control_channel(self)->WaveshareDef:
+    def get_control_channel(self) -> WaveshareDef:
         return self._control_channel
 
-    def set_control_channel(self, control_channel:WaveshareDef):
+    def set_control_channel(self, control_channel: WaveshareDef):
         self._control_channel = control_channel
+
+
+class ControlDefUtils:
+
+    @staticmethod
+    def fetch_control_defs() -> list[ControlDef]:
+        """
+        Fetch the control definitions (for now from JSON, in the future from cloud)
+        :return:
+        """
+
+        ret = list()
+
+        # for now we depend on a static control defs file
+        with open(control_defs_file) as control_defs:
+            file_contents = control_defs.read()
+
+        control_defs = json.loads(file_contents)
+        for control_def in control_defs:
+            ret.append(ControlDef(control_def["uuid"],
+                                  set(control_def["macs"]),
+                                  int(control_def["sensor_type"]),
+                                  float(control_def["threshold_value"]),
+                                  float(control_def["hysteresis"]),
+                                  ThresholdType.from_int(int(control_def["threshold_type"])),
+                                  int(control_def["threshold_duration_millis"]),
+                                  ControlFunc.from_int(int(control_def["control_func"])),
+                                  WaveshareDef.from_channel_def(
+                                      int(control_def["control_channel"]))
+                                  )
+                       )
+
+        return ret
+
+    @staticmethod
+    def get_observables(control_defs: list[ControlDef]) -> dict[int, set]:
+        """
+        Return a list of cache observables
+        :return:
+        """
+        observables_dict = dict()
+
+        for control_def in control_defs:
+            macs = control_def.get_macs()
+            sensor_type = control_def.get_sensor_type()
+            for mac in macs:
+                mac_observable_set = observables_dict.get(mac)
+                if mac_observable_set is None:
+                    mac_observable_set = set()
+                    observables_dict[mac] = mac_observable_set
+                mac_observable_set.add(sensor_type)
+
+        return observables_dict
