@@ -33,6 +33,8 @@ class ControlFunc(IntEnum):
 
 class ControlDef:
     """
+    Contract for the Control Definition
+
     "uuid": "941a5640-82ac-11ee-b962-0242ac120002",
     "macs": [],
     "sensor_type": 248,
@@ -40,8 +42,10 @@ class ControlDef:
     "hysteresis": 0.5,
     "threshold_type": -1,
     "threshold_duration_millis": 30000,
-    "control_func": 0,
+    "control_func": 1,
     "control_channel": 1
+    "back_to_normal_func": 0
+    "fuzz_ms": 500
     """
 
     def __init__(self,
@@ -53,7 +57,9 @@ class ControlDef:
                  threshold_type: ThresholdType = None,
                  threshold_duration_millis: int = None,
                  control_func: ControlFunc = None,
-                 control_channel: WaveshareDef = None):
+                 control_channel: WaveshareDef = None,
+                 back_to_normal_func: ControlFunc = None,
+                 fuzz_ms: float = 0.0):
         self._uuid: str = uuid
 
         if macs is None:
@@ -68,6 +74,8 @@ class ControlDef:
         self._threshold_duration_millis = threshold_duration_millis
         self._control_func: ControlFunc = control_func
         self._control_channel: WaveshareDef = control_channel
+        self._back_to_normal_func: ControlFunc = back_to_normal_func
+        self._fuzz_ms = fuzz_ms
 
     def get_uuid(self) -> str:
         return self._uuid
@@ -123,11 +131,23 @@ class ControlDef:
     def set_control_channel(self, control_channel: WaveshareDef):
         self._control_channel = control_channel
 
+    def set_back_to_normal_func(self, back_to_normal_func: ControlFunc):
+        self._back_to_normal_func = back_to_normal_func
+
+    def get_back_to_normal_func(self) -> ControlFunc:
+        return self._back_to_normal_func
+
+    def set_fuzz_ms(self, fuzz_ms: float):
+        self._fuzz_ms = fuzz_ms
+
+    def get_fuzz_ms(self)-> float:
+        return self._fuzz_ms
+
 
 class ControlDefUtils:
 
     @staticmethod
-    def fetch_control_defs() -> list[ControlDef]:
+    def fetch_control_defs(control_defs_file: str) -> list[ControlDef]:
         """
         Fetch the control definitions (for now from JSON, in the future from cloud)
         :return:
@@ -150,9 +170,9 @@ class ControlDefUtils:
                                   int(control_def["threshold_duration_millis"]),
                                   ControlFunc.from_int(int(control_def["control_func"])),
                                   WaveshareDef.from_channel_def(
-                                      int(control_def["control_channel"]))
-                                  )
-                       )
+                                      int(control_def["control_channel"])),
+                                  ControlFunc.from_int(int(control_def["back_to_normal_func"])),
+                                  float(control_def["fuzz_ms"])))
 
         return ret
 

@@ -11,11 +11,11 @@ class SensorMessageItem:
                  payload_data: float = -1.0,
                  timestamp: int = -1,
                  sent: bool = False):
-        self._type: int = sensor_type
         self._mac: int = mac
+        self._type: int = sensor_type
+        self._data: float = payload_data
         self._timestamp: int = timestamp
         self._sent: bool = sent
-        self._data: float = payload_data
         pass
 
     def __repr__(self):

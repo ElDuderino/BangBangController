@@ -14,6 +14,7 @@ import configparser
 import logging
 from logging.handlers import RotatingFileHandler
 
+from bang_bang_controller import BangBangController
 from redis_monitor import RedisMonitor
 
 # An example of using logging.basicConfig rather than logging.fileHandler()
@@ -35,9 +36,11 @@ if __name__ == "__main__":
     # this is a shared event handler among all the threads
     thread_sig_event = Event()
 
+
     def signal_handler(sig, frame):
         print('You pressed Ctrl+C!')
         thread_sig_event.set()
+
 
     # define the signal handler for SIGINT
     signal.signal(signal.SIGINT, signal_handler)
@@ -50,15 +53,14 @@ if __name__ == "__main__":
     redis_monitor_thread.start()
     logger.info("Redis Cache Monitor thread started.")
 
-    logger.info("Message harvester thread starting:")
-    message_harvester_thread = MessageHarvester(mq_payload_queue,
-                                                thread_sig_event)
-    message_harvester_thread.start()
-    logger.info("Message harvester thread started.")
+    logger.info("BangBang Controller thread starting:")
+    bang_bang_controller = BangBangController(mq_payload_queue,thread_sig_event)
+    bang_bang_controller.start()
+    logger.info("BangBang Controller thread started.")
 
     # Test setting the termination event
     # print("Setting thread_sig_event")
     # thread_sig_event.set()
 
-    serial_port_thread.join()
-    message_harvester_thread.join()
+    redis_monitor_thread.join()
+    redis_monitor_thread.join()
