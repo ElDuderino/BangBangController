@@ -1,7 +1,7 @@
 [{
   "uuid": "941a5640-82ac-11ee-b962-0242ac120002",
   "macs": [303721692,303721693],
-  "sensor_type": 248,
+  "sensor_types": [248],
   "threshold_value": 25.0,
   "hysteresis": 1.5,
   "threshold_type": -1,

@@ -51,7 +51,7 @@ class ControlDef:
     def __init__(self,
                  uuid: str = None,
                  macs: set = None,
-                 sensor_type: int = None,
+                 sensor_types: list[int] = None,
                  threshold_value: float = None,
                  hysteresis: float = None,
                  threshold_type: ThresholdType = None,
@@ -67,7 +67,7 @@ class ControlDef:
         else:
             self._macs = macs
 
-        self._sensor_type: int = sensor_type
+        self._sensor_types: int = sensor_types
         self._threshold_value: float = threshold_value
         self._hysteresis: float = hysteresis
         self._threshold_type: ThresholdType = threshold_type
@@ -89,11 +89,11 @@ class ControlDef:
     def set_macs(self, macs: set):
         self._macs = macs
 
-    def get_sensor_type(self) -> int:
-        return self._sensor_type
+    def get_sensor_types(self) -> list[int]:
+        return self._sensor_types
 
-    def set_sensor_type(self, sensor_type: int):
-        self._sensor_type = sensor_type
+    def set_sensor_type(self, sensor_types: list[int]):
+        self._sensor_types = sensor_types
 
     def get_threshold_value(self) -> float:
         return self._threshold_value
@@ -163,7 +163,7 @@ class ControlDefUtils:
         for control_def in control_defs:
             ret.append(ControlDef(control_def["uuid"],
                                   set(control_def["macs"]),
-                                  int(control_def["sensor_type"]),
+                                  list(control_def["sensor_types"]),
                                   float(control_def["threshold_value"]),
                                   float(control_def["hysteresis"]),
                                   ThresholdType.from_int(int(control_def["threshold_type"])),
@@ -186,12 +186,13 @@ class ControlDefUtils:
 
         for control_def in control_defs:
             macs = control_def.get_macs()
-            sensor_type = control_def.get_sensor_type()
+            sensor_types = control_def.get_sensor_types()
             for mac in macs:
                 mac_observable_set = observables_dict.get(mac)
                 if mac_observable_set is None:
                     mac_observable_set = set()
                     observables_dict[mac] = mac_observable_set
-                mac_observable_set.add(sensor_type)
+                for sensor_type in sensor_types:
+                    mac_observable_set.add(sensor_type)
 
         return observables_dict

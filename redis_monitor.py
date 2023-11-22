@@ -93,14 +93,18 @@ class RedisMonitor(Thread):
         """
         sensor_messages = list()
 
+        # we only fetch MACS that are in control_defs
         for mac in self.observables.keys():
             try:
                 redis_results = self.r.hgetall(str(mac))
                 for redis_result_key in redis_results.keys():
                     redis_result = redis_results[redis_result_key]
                     sensor_message_item: SensorMessageItem = jsonpickle.decode(redis_result)
-                    self.logger.debug("Got cache message:{}".format(sensor_message_item))
-                    sensor_messages.append(sensor_message_item)
+
+                    # check if the type is in the allowed observables
+                    if int(sensor_message_item.get_type()) in (self.observables[mac]):
+                        self.logger.debug("Queuing cache message:{}".format(sensor_message_item))
+                        sensor_messages.append(sensor_message_item)
 
             # try and get more specific with this
             except Exception as e:
