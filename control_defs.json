@@ -10,4 +10,18 @@
   "control_channel": 1,
   "back_to_normal_func": 0,
   "fuzz_ms": 500
-}]
+},
+{
+  "uuid": "941a5640-82ac-11ee-b962-0242ac120432",
+  "macs": [303721692,303721693],
+  "sensor_types": [531],
+  "threshold_value": 25.0,
+  "hysteresis": 1.5,
+  "threshold_type": -1,
+  "threshold_duration_millis": 60000,
+  "control_func": 1,
+  "control_channel": 1,
+  "back_to_normal_func": 0,
+  "fuzz_ms": 500
+}
+]
