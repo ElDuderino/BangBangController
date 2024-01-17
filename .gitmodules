@@ -1,3 +1,6 @@
 [submodule "WaveshareRelayControl"]
 	path = WaveshareRelayControl
 	url = https://github.com/ElDuderino/WaveshareRelayControl
+[submodule "AretasPythonAPI"]
+	path = AretasPythonAPI
+	url = https://github.com/AretasSensorNetworks/AretasPythonAPI

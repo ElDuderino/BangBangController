@@ -59,6 +59,7 @@ class ControlDef:
                  control_func: ControlFunc = None,
                  control_channel: WaveshareDef = None,
                  back_to_normal_func: ControlFunc = None,
+                 allow_back_to_normal: bool = None,
                  fuzz_ms: float = 0.0):
         self._uuid: str = uuid
 
@@ -75,6 +76,7 @@ class ControlDef:
         self._control_func: ControlFunc = control_func
         self._control_channel: WaveshareDef = control_channel
         self._back_to_normal_func: ControlFunc = back_to_normal_func
+        self._allow_back_to_normal = allow_back_to_normal
         self._fuzz_ms = fuzz_ms
 
     def get_uuid(self) -> str:
@@ -136,6 +138,12 @@ class ControlDef:
 
     def get_back_to_normal_func(self) -> ControlFunc:
         return self._back_to_normal_func
+
+    def set_allow_back_to_normal(self, allow_back_to_normal:bool):
+        self._allow_back_to_normal = allow_back_to_normal
+
+    def get_allow_back_to_normal(self)->bool:
+        return self._allow_back_to_normal
 
     def set_fuzz_ms(self, fuzz_ms: float):
         self._fuzz_ms = fuzz_ms

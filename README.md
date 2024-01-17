@@ -11,3 +11,9 @@ We map the types to known SensorMetadata in the Aretas API.
 We might define a control strategy like this:
 
 MAC,TYPE,THRESHOLD,THRESHOLD_TYPE,DURATION_REQUIRED
+
+# Git stuff
+If you're working from the Git repo, you will need to add / clone the submodules
+In addition, if you want to update to the latest version of submodules, navigate into the project
+subfolder and run:
+``git submodule update --remote --merge``

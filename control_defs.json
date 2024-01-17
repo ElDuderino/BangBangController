@@ -9,6 +9,7 @@
   "control_func": 1,
   "control_channel": 1,
   "back_to_normal_func": 0,
+  "allow_back_to_normal": "False",
   "fuzz_ms": 500
 },
 {
@@ -22,6 +23,7 @@
   "control_func": 1,
   "control_channel": 1,
   "back_to_normal_func": 0,
+  "allow_back_to_normal": "True",
   "fuzz_ms": 500
 }
 ]

@@ -143,10 +143,17 @@ class BangBangController(Thread):
             # check the various hystereses
             hysteresis_check = self.check_hysteresis(sensor_message, control_def)
             if hysteresis_check is True:
-                # execute the back to normal command
-                self.logger.debug(
-                    "ALERT LOGIC: Threshold is not exceeded, hysteresis check passed, returning to normal")
-                self.execute_back_to_normal_command(sensor_message, control_def)
+
+                if control_def.get_allow_back_to_normal():
+                    # execute the back to normal command
+                    self.logger.debug(
+                        "ALERT LOGIC: Threshold is not exceeded, hysteresis check passed, returning to normal")
+                    self.execute_back_to_normal_command(sensor_message, control_def)
+
+                else:
+                    self.logger.debug("ALERT LOGIC: Threshold not exceeded, hysteresis check passed, \
+                    but not allowed to return to normal")
+
             else:
                 self.logger.debug("ALERT LOGIC: Threshold is not exceeded, hysteresis check did not pass")
 
@@ -296,7 +303,6 @@ class BangBangControllerDumb:
         self.relay_state = False
 
     def read_sensor(self):
-        # Replace this with your actual sensor reading code
         return self.sensor.get_value()
 
     def check_thresholds(self):
