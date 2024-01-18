@@ -17,6 +17,13 @@ logger = logging.getLogger(__name__)
 
 
 def sine_wave(x, min_max_range, frequency):
+    """
+    Generate a sine wave dataset!
+    :param x:
+    :param min_max_range:
+    :param frequency:
+    :return:
+    """
     min_val, max_val = min_max_range
     amplitude = (max_val - min_val) / 2
 
@@ -30,6 +37,13 @@ def sine_wave(x, min_max_range, frequency):
 
 
 def triangle_wave_sg(x, min_max_range, frequency):
+    """
+    Generate a triangle wave using the sawtooth function
+    :param x:
+    :param min_max_range:
+    :param frequency:
+    :return:
+    """
     min_val, max_val = min_max_range
     amplitude = (max_val - min_val)
     y = amplitude * sg.sawtooth(frequency * 2 * np.pi * x, width=0.5)
@@ -37,6 +51,13 @@ def triangle_wave_sg(x, min_max_range, frequency):
 
 
 def triangle_wave(x, min_max_range, frequency):
+    """
+    Create a triangle wave
+    :param x:
+    :param min_max_range:
+    :param frequency:
+    :return:
+    """
     min_val, max_val = min_max_range
     amplitude = (max_val - min_val)
     min_val = min_val - amplitude
@@ -51,6 +72,13 @@ def triangle_wave(x, min_max_range, frequency):
 
 
 def plot_temperature(x_values, y_values, title):
+    """
+    Plot the generated temperature values
+    :param x_values:
+    :param y_values:
+    :param title:
+    :return:
+    """
     # Convert current time in milliseconds to a datetime object
     current_time = int(time.time() * 1000)
     current_datetime = datetime.datetime.fromtimestamp(current_time / 1000)

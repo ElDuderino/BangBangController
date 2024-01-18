@@ -4,6 +4,12 @@ import time
 from multiprocessing import Queue, Event
 from threading import Thread
 
+import requests
+import urllib3
+
+from AretasPythonAPI.api_config import APIConfig
+from AretasPythonAPI.auth import APIAuth
+from AretasPythonAPI.sensor_data_ingest import SensorDataIngest
 from WaveshareRelayControl.relaycontrolmain import WaveshareRelayController
 from control_defs import ControlDefUtils, ControlDef, ThresholdType, ControlFunc
 from sensor_message_item import SensorMessageItem
@@ -70,6 +76,15 @@ class BangBangController(Thread):
         self.message_queue = message_queue
         self.sig_event = sig_event
 
+        self.api_update_interval = config.getint('DEFAULT', 'api_update_interval')
+        self.api_mac = config.getint('DEFAULT', 'api_mac')
+
+        self.api_config = APIConfig()
+        self.api_auth = APIAuth(self.api_config)
+        self.api_writer = SensorDataIngest(self.api_auth)
+
+        self.last_api_update_time = 0
+
         self.thread_sleep = config.getboolean('DEFAULT', 'thread_sleep')
         self.thread_sleep_time = config.getfloat('DEFAULT', 'thread_sleep_time')
 
@@ -80,9 +95,11 @@ class BangBangController(Thread):
         self.control_triggers: dict[str, ControlTrigger] = dict()
 
         serial_port = config.get("RELAY_CONTROLLER", "serial_port", fallback="/dev/ttyUSB0")
+        set_default_state_at_boot = config.getboolean("RELAY_CONTROLLER", "set_default_state_at_boot", fallback=False)
 
         self.relay_controller = WaveshareRelayController(serial_port)
-        self.relay_controller.set_default_state()
+        if set_default_state_at_boot is True:
+            self.relay_controller.set_default_state()
 
     def process_message(self, sensor_message: SensorMessageItem):
         """
@@ -91,7 +108,9 @@ class BangBangController(Thread):
         :return:
         """
         for control_def in self.control_defs:
-            if sensor_message.get_mac() in control_def.get_macs():
+            # check if the mac and the sensor type match the control strategy
+            if (sensor_message.get_mac() in control_def.get_macs()) and (sensor_message.get_type() in control_def.get_sensor_types()):
+
                 exceeded = self.exceeded_threshold(sensor_message, control_def)
                 self.do_post_threshold_logic(sensor_message, control_def, exceeded)
 
@@ -102,6 +121,7 @@ class BangBangController(Thread):
 
         if (exceeded is True) and (control_trigger is not None):
             # we have a control trigger, meaning the threshold has been previously exceeded
+            # AND that this MAC and type has triggered it before
             # have duration_exceeded_millis milliseconds expired since the last trigger?
             # be mindful that there is some drift in message arrival time so if you set it exactly
             # to the message arrival duration, it might not get triggered until the *next* interval unless
@@ -159,7 +179,15 @@ class BangBangController(Thread):
 
     @staticmethod
     def get_control_trigger_key(sensor_message: SensorMessageItem, control_def: ControlDef) -> str:
-        return "{0}-{1}".format(sensor_message.get_mac(), control_def.get_uuid())
+        """
+        This key generation is super important, it essentially provides "validation" that the mac and the type match
+        when we're inspecting the packet for the control logic.
+
+        :param sensor_message:
+        :param control_def:
+        :return:
+        """
+        return "{0}-{1}-{2}".format(sensor_message.get_mac(), sensor_message.get_type(), control_def.get_uuid())
 
     @staticmethod
     def exceeded_duration_ms(sensor_message: SensorMessageItem,
@@ -251,6 +279,70 @@ class BangBangController(Thread):
             self.logger.error("Invalid ThresholdType:{}".format(control_def.get_threshold_type()))
             return False
 
+    def send_batch_to_api(self, batch: list[dict]) -> bool:
+        """
+        Send a batch of messages to the API
+        If sending is successful, set_is_sent to True
+        """
+        try:
+            # we're using the token self-management function
+            err = self.api_writer.send_data(batch, True)
+            if err is False:
+                self.logger.error("Error sending messages, aborting rest")
+                return False
+            else:
+                return True
+
+        except urllib3.exceptions.ReadTimeoutError as rte:
+            '''
+            There are a lot of things we need to handle in stateless HTTP land without
+            aborting the thread
+            '''
+            self.logger.error("Read timeout error from urllib3:{}".format(rte))
+            # we break because there's no point in trying to send the rest of the messages,
+            # we can wait until next interval
+            return False
+
+        except requests.exceptions.ReadTimeout as rt:
+            self.logger.error("Read timeout error from requests:{}".format(rt))
+            return False
+
+        except requests.exceptions.ConnectTimeout as cte:
+            self.logger.error("Connection timeout error sending messages to API:{}".format(cte))
+            return False
+
+        # we need to be fairly aggressive with exception handling as we are in a thread
+        # doing network stuff and network things are buggy as heck
+        except Exception as e:
+            self.logger.error("Unknown exception trying to send messages to API:{}".format(e))
+            return False
+
+    def update_api(self):
+
+        try:
+            batch = list()
+
+            now = int(time.time() * 1000)
+            channel_states = self.relay_controller.get_channel_states()
+
+            base_type = 0x12D  # 301 sensortype from API
+
+            for channel, state in channel_states.items():
+                datum: dict = {
+                    'mac': self.api_mac,
+                    'type': base_type + (channel.get_channel_number() - 1),
+                    'timestamp': now,
+                    'data': state
+                }
+
+                batch.append(datum)
+                self.logger.info("Sending batch len {} to API:".format(len(batch)))
+                self.send_batch_to_api(batch)
+
+        except Exception as e:
+            self.logger.error("Unknown exception trying to send messages to API:{}".format(e))
+            return False
+
     def exceeded_threshold(self, sensor_message: SensorMessageItem, control_def: ControlDef) -> bool:
         """
         Check if the sensor data overshot or undershot the threshold
@@ -284,6 +376,12 @@ class BangBangController(Thread):
             pass
             # refresh control_defs
             pass
+
+            now = int(time.time() * 1000)
+            if (now - self.last_api_update_time) >= self.api_update_interval:
+                self.logger.info("Updating API statuses")
+                self.update_api()
+                self.last_api_update_time = now
 
             if self.sig_event.is_set():
                 print("Exiting {}".format(self.__class__.__name__))

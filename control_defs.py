@@ -37,14 +37,15 @@ class ControlDef:
 
     "uuid": "941a5640-82ac-11ee-b962-0242ac120002",
     "macs": [],
-    "sensor_type": 248,
+    "sensor_types": [248],
     "threshold_value": 23.0,
     "hysteresis": 0.5,
     "threshold_type": -1,
     "threshold_duration_millis": 30000,
     "control_func": 1,
-    "control_channel": 1
-    "back_to_normal_func": 0
+    "control_channel": 1,
+    "back_to_normal_func": 0,
+    "allow_back_to_normal:True,
     "fuzz_ms": 500
     """
 
