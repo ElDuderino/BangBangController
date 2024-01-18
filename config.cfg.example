@@ -1,0 +1,27 @@
+[DEFAULT]
+API_URL=https://iot.aretas.ca/rest/
+
+API_USERNAME =username
+API_PASSWORD =password
+
+# optional flag for sleeping the thread
+thread_sleep = False
+thread_sleep_time = 0.1
+
+control_defs_file=control_defs.json
+
+# milliseconds between API updates
+api_update_interval = 120000
+# the mac address in the system representing the Relay box
+api_mac = 303721661
+
+[REDIS]
+redis_host= localhost
+redis_port= 16379
+redis_authpw= pw
+cache_fetch_interval_ms=3000
+
+[RELAY_CONTROLLER]
+serial_port=COM49
+
+set_default_state_at_boot = False

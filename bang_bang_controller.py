@@ -101,12 +101,22 @@ class BangBangController(Thread):
         if set_default_state_at_boot is True:
             self.relay_controller.set_default_state()
 
+        # track how many messages we've processed
+        self.n_messages_processed = 0
+
+        self.cache_fetch_interval_ms = config.get("REDIS", "cache_fetch_interval_ms", fallback=30000)
+
     def process_message(self, sensor_message: SensorMessageItem):
         """
         Process incoming sensor messages
         :param sensor_message:
         :return:
         """
+        self.n_messages_processed += 1
+
+        if (self.n_messages_processed % 400) == 0:
+            self.logger.info("Processed {} messages".format(self.n_messages_processed))
+
         for control_def in self.control_defs:
             # check if the mac and the sensor type match the control strategy
             if (sensor_message.get_mac() in control_def.get_macs()) and (sensor_message.get_type() in control_def.get_sensor_types()):
@@ -328,6 +338,9 @@ class BangBangController(Thread):
             base_type = 0x12D  # 301 sensortype from API
 
             for channel, state in channel_states.items():
+                if state is None:
+                    # the state has not been modified by any control action yet
+                    state = -1
                 datum: dict = {
                     'mac': self.api_mac,
                     'type': base_type + (channel.get_channel_number() - 1),
