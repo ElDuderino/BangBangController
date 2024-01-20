@@ -18,7 +18,7 @@ from bang_bang_controller import BangBangController
 from redis_monitor import RedisMonitor
 
 # An example of using logging.basicConfig rather than logging.fileHandler()
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     handlers=[
                         RotatingFileHandler("RelayController.log", maxBytes=50000000, backupCount=5)
                     ],

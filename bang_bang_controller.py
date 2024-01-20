@@ -104,7 +104,7 @@ class BangBangController(Thread):
         # track how many messages we've processed
         self.n_messages_processed = 0
 
-        self.cache_fetch_interval_ms = config.get("REDIS", "cache_fetch_interval_ms", fallback=30000)
+        self.cache_fetch_interval_ms = config.getint("REDIS", "cache_fetch_interval_ms", fallback=30000)
 
     def process_message(self, sensor_message: SensorMessageItem):
         """
@@ -119,8 +119,8 @@ class BangBangController(Thread):
 
         for control_def in self.control_defs:
             # check if the mac and the sensor type match the control strategy
-            if (sensor_message.get_mac() in control_def.get_macs()) and (sensor_message.get_type() in control_def.get_sensor_types()):
-
+            if (sensor_message.get_mac() in control_def.get_macs()) and (
+                    sensor_message.get_type() in control_def.get_sensor_types()):
                 exceeded = self.exceeded_threshold(sensor_message, control_def)
                 self.do_post_threshold_logic(sensor_message, control_def, exceeded)
 
@@ -337,10 +337,19 @@ class BangBangController(Thread):
 
             base_type = 0x12D  # 301 sensortype from API
 
+            # we only care about the relay GPIO channels (CH1-8)
+            channel_list = ["CH{}".format(i) for i in range(1, 9)]
+
             for channel, state in channel_states.items():
+
+                # only send state information about the relay channels
+                if channel.name not in channel_list:
+                    continue
+
                 if state is None:
                     # the state has not been modified by any control action yet
                     state = -1
+
                 datum: dict = {
                     'mac': self.api_mac,
                     'type': base_type + (channel.get_channel_number() - 1),
@@ -349,8 +358,8 @@ class BangBangController(Thread):
                 }
 
                 batch.append(datum)
-                self.logger.info("Sending batch len {} to API:".format(len(batch)))
-                self.send_batch_to_api(batch)
+            self.logger.info("Sending batch len {} to API:".format(len(batch)))
+            self.send_batch_to_api(batch)
 
         except Exception as e:
             self.logger.error("Unknown exception trying to send messages to API:{}".format(e))
