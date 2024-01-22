@@ -97,9 +97,12 @@ class BangBangController(Thread):
         serial_port = config.get("RELAY_CONTROLLER", "serial_port", fallback="/dev/ttyUSB0")
         set_default_state_at_boot = config.getboolean("RELAY_CONTROLLER", "set_default_state_at_boot", fallback=False)
 
-        self.relay_controller = WaveshareRelayController(serial_port)
+        default_states_str = config.get("RELAY_CONTROLLER", "default_relay_states", fallback=None)
+        default_states_dict = WaveshareRelayController.parse_default_states(default_states_str)
+
+        self.relay_controller = WaveshareRelayController(serial_port, default_states=default_states_dict)
         if set_default_state_at_boot is True:
-            self.relay_controller.set_default_state()
+            self.relay_controller.set_default_states()
 
         # track how many messages we've processed
         self.n_messages_processed = 0
