@@ -140,16 +140,16 @@ class ControlDef:
     def get_back_to_normal_func(self) -> ControlFunc:
         return self._back_to_normal_func
 
-    def set_allow_back_to_normal(self, allow_back_to_normal:bool):
+    def set_allow_back_to_normal(self, allow_back_to_normal: bool):
         self._allow_back_to_normal = allow_back_to_normal
 
-    def get_allow_back_to_normal(self)->bool:
+    def get_allow_back_to_normal(self) -> bool:
         return self._allow_back_to_normal
 
     def set_fuzz_ms(self, fuzz_ms: float):
         self._fuzz_ms = fuzz_ms
 
-    def get_fuzz_ms(self)-> float:
+    def get_fuzz_ms(self) -> float:
         return self._fuzz_ms
 
 
@@ -170,18 +170,25 @@ class ControlDefUtils:
 
         control_defs = json.loads(file_contents)
         for control_def in control_defs:
-            ret.append(ControlDef(control_def["uuid"],
-                                  set(control_def["macs"]),
-                                  list(control_def["sensor_types"]),
-                                  float(control_def["threshold_value"]),
-                                  float(control_def["hysteresis"]),
-                                  ThresholdType.from_int(int(control_def["threshold_type"])),
-                                  int(control_def["threshold_duration_millis"]),
-                                  ControlFunc.from_int(int(control_def["control_func"])),
-                                  WaveshareDef.from_channel_def(
-                                      int(control_def["control_channel"])),
-                                  ControlFunc.from_int(int(control_def["back_to_normal_func"])),
-                                  float(control_def["fuzz_ms"])))
+
+            # force types for control def properties, so we don't end up with unintentional
+            # boolean or int comparisons with strings
+            cls_control_def = ControlDef(
+                uuid=control_def["uuid"],
+                macs=set(control_def["macs"]),
+                sensor_types=list(control_def["sensor_types"]),
+                threshold_value=float(control_def["threshold_value"]),
+                hysteresis=float(control_def["hysteresis"]),
+                threshold_type=ThresholdType.from_int((int(control_def["threshold_type"]))),
+                threshold_duration_millis=int(control_def["threshold_duration_millis"]),
+                control_func=ControlFunc.from_int(int(control_def["control_func"])),
+                control_channel=WaveshareDef.from_channel_def(int(control_def["control_channel"])),
+                back_to_normal_func=ControlFunc.from_int((int(control_def["back_to_normal_func"]))),
+                fuzz_ms=float(control_def["fuzz_ms"]),
+                allow_back_to_normal=bool(control_def["allow_back_to_normal"])
+            )
+
+            ret.append(cls_control_def)
 
         return ret
 

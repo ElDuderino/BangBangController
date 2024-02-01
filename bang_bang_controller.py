@@ -149,8 +149,9 @@ class BangBangController(Thread):
                 is_on = True
 
             if (exceeded_duration_ms is True) and (is_on is False):
-                self.logger.debug("ALERT LOGIC: Value has exceeded threshold, duration millis is exceeded, turning "
-                                  "control on")
+                self.logger.debug(
+                    "ALERT LOGIC: Value has exceeded threshold, duration millis is exceeded, turning control on"
+                )
                 self.execute_control_command(sensor_message, control_def)
             else:
                 self.logger.debug("ALERT LOGIC: Value has exceeded threshold, exceeded_duration_ms:{} control is:{}"
